@@ -1,19 +1,24 @@
 package rooms;
 
-import player.Player;
 import hints.HintSystem;
+import items.Kamerinfo;
+import items.Sleutel;
+import items.Zwaard;
+import player.Player;
+import vraag.VraagStrategie;
 
 public class SaveRoom extends Room {
-    private final Player player;
 
-    public SaveRoom(HintSystem hintSystem, Player player) {
-        super(hintSystem, "Save Room");
-        this.player = player;
+    public SaveRoom(HintSystem hintSystem, VraagStrategie strategie, Player player) {
+        super(hintSystem, strategie, player, "Save Room");
     }
 
     @Override
-    public void enter() {
-        player.nextRoom();
+    public void spawnMonster() {
+    }
+
+    @Override
+    public void printKamerInfo() {
         System.out.println("💾 Je bent in een Save Room!");
         System.out.println("Je voelt je opgeladen... +20 HP!");
         player.increaseHP(20);
@@ -22,5 +27,11 @@ public class SaveRoom extends Room {
 
     @Override
     public void stelVraag() {
+    }
+    @Override
+    public void voegVoorwerpenToe() {
+        voegVoorwerpToe("boek", new Kamerinfo("Oude inscripties sieren de muur."));
+        voegVoorwerpToe("zwaard", new Zwaard(40));
+        voegVoorwerpToe("sleutel", new Sleutel("Bronzen sleutel"));
     }
 }

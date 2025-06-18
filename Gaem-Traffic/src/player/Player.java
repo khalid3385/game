@@ -7,6 +7,8 @@ public class Player {
     private int hp = 100;
     private int currentRoom = 0;
     private int totaalKamers = 0;
+    private int score = 0;
+
     private JokerContext jokerContext = new JokerContext(new HintJoker());
 
     public Player(int playerId) {
@@ -29,7 +31,6 @@ public class Player {
         this.hp = Math.min(100, this.hp + amount);
     }
 
-
     public void decreaseHP(int amount) {
         this.hp = Math.max(0, this.hp - amount);
     }
@@ -50,12 +51,22 @@ public class Player {
         this.currentRoom = index;
     }
 
+    public void addScore(int amount) {
+        score += amount;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
     public String getStatus() {
         String kamerTekst = totaalKamers > 0
                 ? "Kamer: " + (currentRoom + 1) + " / " + totaalKamers
                 : "Kamer index: " + currentRoom;
+
         return "📊 STATUS - Speler #" + playerId + "\n" +
                 "HP: " + hp + "\n" +
+                "Score: " + score + "\n" +
                 kamerTekst;
     }
 
@@ -65,5 +76,6 @@ public class Player {
     }
 
     public void schade(int i) {
+        // Implementatie later indien nodig
     }
 }

@@ -1,7 +1,11 @@
 package commands;
 
+import monsters.Monster;
 import player.Player;
 import rooms.Room;
+import door.Door;
+import commands.AssistentCommand;
+import items.*;
 
 public class CommandHandler {
     private static Player speler;
@@ -12,14 +16,22 @@ public class CommandHandler {
         speler = p;
     }
 
-    public static void setHuidigeKamer(Room kamer) {
+    public static void setCurrentRoom(Room kamer) {
         huidigeKamer = kamer;
     }
 
+    public static void setAssistent(AssistentCommand a) {
+        assistent = a;
+    }
+
+    /** @return true als het een commando was, false als gewone invoer */
     public static boolean verwerk(String input) {
         if (!input.startsWith("/")) return false;
 
-        switch (input.toLowerCase()) {
+        String[] delen = input.trim().split("\\s+", 2);
+        String cmd = delen[0].toLowerCase();
+
+        switch (cmd) {
             case "/help":
                 toonHelp();
                 return true;
@@ -32,6 +44,11 @@ public class CommandHandler {
             case "/keyjoker":
                 gebruikKeyJoker();
                 return true;
+            case "/assistent":
+                gebruikAssistent();
+                return true;
+            case "/use":
+                return gebruikVoorwerp(delen.length == 2 ? delen[1] : "");
             default:
                 System.out.println("❌ Onbekende command.");
                 return true;
@@ -39,11 +56,15 @@ public class CommandHandler {
     }
 
     private static void toonHelp() {
-        System.out.println("📖 Beschikbare commands:");
-        System.out.println("/help       - Toon deze lijst met commands");
-        System.out.println("/status     - Toon je huidige spelerstatus");
-        System.out.println("/hintjoker  - Gebruik de Hint Joker");
-        System.out.println("/keyjoker   - Gebruik de Key Joker (alleen in KeyJoker-kamer)");
+        System.out.println("""
+            📖 Beschikbare commands:
+            /help          - Toon deze lijst
+            /status        - Toon spelerstatus
+            /hintjoker     - Gebruik de Hint Joker
+            /keyjoker      - Gebruik de Key Joker (alleen in KeyJoker-kamer)
+            /assistent     - Activeer de assistent voor hulp, tips en motivatie
+            /use <object>  - Gebruik een voorwerp in de kamer
+            """);
     }
 
     private static void toonStatus() {
@@ -53,9 +74,6 @@ public class CommandHandler {
             System.out.println(speler.getStatus());
         }
     }
-
-    public static void setAssistent(AssistentCommand a) {
-        assistent = a;}
 
     private static void gebruikHintJoker() {
         if (speler == null || huidigeKamer == null) {
@@ -73,5 +91,52 @@ public class CommandHandler {
         }
         speler.getJokerContext().setJoker(new Joker.KeyJoker());
         speler.getJokerContext().useJoker(huidigeKamer);
+    }
+
+    private static void gebruikAssistent() {
+        if (assistent == null) {
+            System.out.println("⚠ Assistent is niet beschikbaar in deze context.");
+        } else {
+            assistent.activeer();
+        }
+    }
+
+    private static boolean gebruikVoorwerp(String key) {
+        if (key.isEmpty()) {
+            System.out.println("⚠ Gebruik: /use <voorwerp>");
+            return true;
+        }
+
+        if (huidigeKamer == null) {
+            System.out.println("⚠ Er is momenteel geen kamer actief.");
+            return true;
+        }
+
+        Object obj = huidigeKamer.getObject(key.toLowerCase());
+
+        if (obj == null) {
+            System.out.println("❌ Hier ligt geen \"" + key + "\".");
+        } else if (obj instanceof MessageDisplayable msg) {
+            msg.showMessage();
+        } else if (obj instanceof Attackable atk) {
+            Monster m = huidigeKamer.getMonster();
+            atk.attack(m);
+            if (m != null && m.isVerslagen()) {
+                huidigeKamer.removeObserver(m);
+                huidigeKamer.setMonster(null);
+            }
+        } else if (obj instanceof UsableOnDoor opener) {
+            opener.useOnDoor(huidigeKamer.getDeur());
+            if (!huidigeKamer.isAfgerond()) {
+                huidigeKamer.markAfgerond();
+                System.out.println("✅ De kamer is voltooid. Je kunt een nieuwe kamer kiezen!");
+            }
+            return false; // terug naar hoofdmenu
+        } else if (obj instanceof Rewardable reward) {
+            reward.grantReward(speler);
+        } else {
+            System.out.println("❔ Je kunt \"" + key + "\" niet gebruiken.");
+        }
+        return false;
     }
 }

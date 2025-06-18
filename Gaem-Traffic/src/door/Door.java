@@ -17,4 +17,9 @@ public class Door implements AnswerObserver {
     public boolean isOpen() {
         return open;
     }
+
+    // Publieke setter zodat Sleutel veilig kan openen
+    public void setOpen(boolean open) {
+        this.open = open;
+    }
 }
